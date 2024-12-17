@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
 
@@ -15,6 +16,7 @@ namespace SistemaVentas
         public PantallaPrincipal()
         {
             InitializeComponent();
+            this.WindowState = FormWindowState.Maximized;
             CargarCategorias();
             ConfigurarDatosIniciales();
             CargarLogotipo();
@@ -285,6 +287,7 @@ namespace SistemaVentas
         private void ActualizarTotal()
         {
             decimal total = 0;
+
             foreach (DataGridViewRow row in dgvCarrito.Rows)
             {
                 if (row.Cells["ValorTotal"].Value != null)
@@ -292,8 +295,33 @@ namespace SistemaVentas
                     total += Convert.ToDecimal(row.Cells["ValorTotal"].Value);
                 }
             }
+
             txtTotal.Text = total.ToString("C2");
+           
         }
+
+        private void TxtDineroDado_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (decimal.TryParse(txtDineroDado.Text, out decimal dineroRecibido) &&
+                  decimal.TryParse(txtTotal.Text, NumberStyles.Currency, CultureInfo.CurrentCulture, out decimal totalCompra))
+
+                {
+                    decimal vuelto = dineroRecibido - totalCompra;
+                    txtVuelto.Text = vuelto >= 0 ? vuelto.ToString("C2") : "Faltante";
+                }
+                else
+                {
+                    txtVuelto.Text = "";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error en el cálculo: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
 
         private void BtnLimpiar_Click(object sender, EventArgs e)
         {
@@ -328,6 +356,8 @@ namespace SistemaVentas
                     txtNumeroFactura.Text = nuevoNumero;
                     txtNumeroOrden.Text = nuevoNumero;
                 }
+                BtnLimpiar_Click(null, null);
+
             }
             catch (Exception ex)
             {

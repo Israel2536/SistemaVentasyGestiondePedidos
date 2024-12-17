@@ -26,6 +26,8 @@ namespace SistemaVentas
         private TabControl tabControlPantallaPrincipal; // TabControl principal
         private TabPage tabPantallaPrincipal; // Pestaña Pantalla Principal
         private TabPage tabAgregarItems; // Pestaña Agregar Ítems
+        private TextBox txtDineroDado;
+        private TextBox txtVuelto;
 
         protected override void Dispose(bool disposing)
         {
@@ -79,6 +81,48 @@ namespace SistemaVentas
 
             // Agregar el TabControl al formulario principal
             this.Controls.Add(tabControlPantallaPrincipal);
+            // Label para "Dinero Recibido"
+            Label lblDineroDado = new Label
+            {
+                Text = "Dinero Recibido:",
+                Location = new Point(1040, 560), // Debajo del Total
+                AutoSize = true,
+                Font = new Font("Arial", 10)
+            };
+            tabPantallaPrincipal.Controls.Add(lblDineroDado);
+
+            // TextBox para "Dinero Recibido"
+            txtDineroDado = new TextBox
+            {
+                Location = new Point(1150, 555), // Alineado con el Total
+                Width = 100,
+                Font = new Font("Arial", 10)
+            };
+            tabPantallaPrincipal.Controls.Add(txtDineroDado);
+
+            // Label para "Vuelto"
+            Label lblVuelto = new Label
+            {
+                Text = "Vuelto:",
+                Location = new Point(1040, 590), // Debajo del Dinero Recibido
+                AutoSize = true,
+                Font = new Font("Arial", 10)
+            };
+            tabPantallaPrincipal.Controls.Add(lblVuelto);
+
+            // TextBox para "Vuelto"
+            txtVuelto = new TextBox
+            {
+                Location = new Point(1150, 585),
+                Width = 100,
+                ReadOnly = true,
+                Font = new Font("Arial", 10)
+            };
+            tabPantallaPrincipal.Controls.Add(txtVuelto);
+
+
+
+            txtDineroDado.TextChanged += TxtDineroDado_TextChanged;
         }
 
         private void InicializarControlesPantallaPrincipal()
