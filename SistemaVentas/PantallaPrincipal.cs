@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Drawing;
 using System.Drawing.Printing;
@@ -251,9 +252,10 @@ namespace SistemaVentas
 
         private void AgregarProducto(string producto, decimal precio)
         {
-            dgvCarrito.Rows.Add(producto, precio, 1, precio);
+            dgvCarrito.Rows.Add(producto, "", precio, 1, precio);
             ActualizarTotal();
         }
+
 
         private void DgvCarrito_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
@@ -369,90 +371,141 @@ namespace SistemaVentas
             Graphics g = e.Graphics;
 
             // Configuración de márgenes y dimensiones
-            int startY = 10;
-            int offset = 20;
-            int paperWidth = 270;
-            int contentWidth = paperWidth - 20;
-            int xCenter = paperWidth / 2;
+            int startY = 10; // Margen superior inicial
+            int offset = 20; // Espaciado entre líneas
+            int paperWidth = 270; // Ancho del papel (aproximadamente 3 pulgadas)
+            int contentWidth = paperWidth - 20; // Ancho de contenido
+            int xCenter = paperWidth / 2; // Centro horizontal
+
+            // Configuración de columnas
+            int colProductoWidth = 100; // Ancho para la columna Producto
+            int colDescripcionWidth = 120; // Ancho para la columna Descripción
+            int colCantidadWidth = 40; // Ancho para la columna Cantidad
 
             // Fuentes
-            Font headerFont = new Font("Arial", 10, FontStyle.Bold);
             Font regularFont = new Font("Courier New", 8);
             Font boldFont = new Font("Courier New", 8, FontStyle.Bold);
 
-            // Si es para el cliente, imprime el encabezado
+            // **Factura para el cliente**
             if (esParaCliente)
             {
-                // Dibujar el logo centrado
-                if (logotipo != null)
-                {
-                    int logoWidth = 150;
-                    int logoHeight = 60;
-                    g.DrawImage(logotipo, xCenter - (logoWidth / 2), startY, logoWidth, logoHeight);
-                    startY += logoHeight + 10;
-                }
-
-                // Encabezado
-                g.DrawString("RUC: 1750071472001", regularFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
+                // Encabezado del local
+                g.DrawString("RUC: 1750071472001", regularFont, Brushes.Black, new Point(10, startY));
                 startY += offset;
-                g.DrawString("Dirección: Juan Montalvo e Imbabura", regularFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
+                g.DrawString("Dirección: Juan Montalvo e Imbabura N6-59, Cayambe", regularFont, Brushes.Black, new Point(10, startY));
                 startY += offset;
-                g.DrawString("N6-59, Cayambe", regularFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
-                startY += offset;
-                g.DrawString("Teléfono: 0987933932", regularFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
+                g.DrawString("Teléfono: 0987933932", regularFont, Brushes.Black, new Point(10, startY));
                 startY += offset;
 
-                // Información de la factura
-                g.DrawString($"Fecha: {txtFecha.Text}", regularFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
+                g.DrawString($"Fecha: {txtFecha.Text}", regularFont, Brushes.Black, new Point(10, startY));
                 startY += offset;
-                g.DrawString($"Factura: {txtNumeroFactura.Text}  Orden: {txtNumeroOrden.Text}", boldFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
+                g.DrawString($"Factura: {txtNumeroFactura.Text}  Orden: {txtNumeroOrden.Text}", boldFont, Brushes.Black, new Point(10, startY));
                 startY += offset;
 
-                // Información del cliente
-                g.DrawString("Cliente:", boldFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
+                g.DrawString($"Cliente: {txtNombreCliente.Text}", regularFont, Brushes.Black, new Point(10, startY));
                 startY += offset;
-                g.DrawString($"Cédula: {txtCedulaCliente.Text}", regularFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
-                startY += offset;
-                g.DrawString($"Nombre: {txtNombreCliente.Text}", regularFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
-                startY += offset;
-            }
 
-            // Detalle de productos
-            g.DrawLine(Pens.Black, new Point(10, startY), new Point(contentWidth, startY));
-            startY += offset;
-            g.DrawString("Producto      Cant.  P.Uni  Total", boldFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
-            startY += offset;
+                // Línea separadora
+                g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+                startY += offset;
 
-            foreach (DataGridViewRow row in dgvCarrito.Rows)
-            {
-                if (row.Cells["Producto"].Value != null)
+                // Cabecera de la tabla
+                g.DrawString("Producto", boldFont, Brushes.Black, new Point(10, startY));
+                g.DrawString("Cant.", boldFont, Brushes.Black, new Point(140, startY));
+                g.DrawString("P.Uni", boldFont, Brushes.Black, new Point(180, startY));
+                g.DrawString("Total", boldFont, Brushes.Black, new Point(220, startY));
+                startY += offset;
+
+                // Contenido de la tabla
+                foreach (DataGridViewRow row in dgvCarrito.Rows)
                 {
                     string producto = row.Cells["Producto"].Value.ToString();
                     string cantidad = row.Cells["Cantidad"].Value.ToString();
                     string precioUnitario = row.Cells["PrecioUnitario"].Value.ToString();
                     string total = row.Cells["ValorTotal"].Value.ToString();
 
-                    // Imprimir detalle del producto
-                    g.DrawString(producto, regularFont, Brushes.Black, new RectangleF(10, startY, 140, offset));
-                    g.DrawString(cantidad, regularFont, Brushes.Black, new RectangleF(150, startY, 30, offset));
-                    if (esParaCliente)
+                    // Ajuste de salto de línea para Producto
+                    List<string> lineasProducto = AjustarTexto(producto, 20);
+                    foreach (string linea in lineasProducto)
                     {
-                        g.DrawString(precioUnitario, regularFont, Brushes.Black, new RectangleF(180, startY, 40, offset));
-                        g.DrawString(total, regularFont, Brushes.Black, new RectangleF(220, startY, 50, offset));
+                        g.DrawString(linea, regularFont, Brushes.Black, new Point(10, startY));
+                        startY += offset;
                     }
-                    startY += offset;
-                }
-            }
 
-            // Total (solo para cliente)
-            if (esParaCliente)
-            {
-                g.DrawLine(Pens.Black, new Point(10, startY), new Point(contentWidth, startY));
+                    g.DrawString(cantidad, regularFont, Brushes.Black, new Point(140, startY - offset));
+                    g.DrawString(precioUnitario, regularFont, Brushes.Black, new Point(180, startY - offset));
+                    g.DrawString(total, regularFont, Brushes.Black, new Point(220, startY - offset));
+                }
+
+                // Total
                 startY += offset;
-                g.DrawString($"TOTAL: {txtTotal.Text}", boldFont, Brushes.Black, new RectangleF(10, startY, contentWidth, offset));
+                g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+                startY += offset;
+                g.DrawString($"TOTAL: {txtTotal.Text}", boldFont, Brushes.Black, new Point(10, startY));
+            }
+            else // **Papel de la cocina**
+            {
+                startY += 40; // Espacio adicional arriba
+
+                g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+                startY += offset;
+
+                // Cabecera para el papel de cocina
+                g.DrawString("Producto", boldFont, Brushes.Black, new Point(10, startY));
+                g.DrawString("Descripción", boldFont, Brushes.Black, new Point(110, startY));
+                g.DrawString("Cant", boldFont, Brushes.Black, new Point(240, startY));
+                startY += offset;
+
+                // Contenido de la tabla
+                foreach (DataGridViewRow row in dgvCarrito.Rows)
+                {
+                    string producto = row.Cells["Producto"].Value.ToString();
+                    string descripcion = row.Cells["Descripcion"].Value?.ToString() ?? "";
+                    string cantidad = row.Cells["Cantidad"].Value.ToString();
+
+                    // Imprimir Producto
+                    List<string> lineasProducto = AjustarTexto(producto, 20);
+                    foreach (string linea in lineasProducto)
+                    {
+                        g.DrawString(linea, regularFont, Brushes.Black, new Point(10, startY));
+                        startY += offset;
+                    }
+
+                    // Imprimir Descripción
+                    g.DrawString(descripcion, regularFont, Brushes.Black, new Point(110, startY - (lineasProducto.Count * offset)));
+
+                    // Imprimir Cantidad
+                    g.DrawString(cantidad, regularFont, Brushes.Black, new Point(240, startY - (lineasProducto.Count * offset)));
+                }
             }
         }
 
+        private List<string> AjustarTexto(string texto, int maxLength)
+        {
+            List<string> lineas = new List<string>();
+            string[] palabras = texto.Split(' ');
+            string lineaActual = "";
 
+            foreach (string palabra in palabras)
+            {
+                if ((lineaActual + palabra).Length > maxLength)
+                {
+                    lineas.Add(lineaActual);
+                    lineaActual = palabra + " ";
+                }
+                else
+                {
+                    lineaActual += palabra + " ";
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(lineaActual))
+                lineas.Add(lineaActual);
+
+            return lineas;
+        }
+
+
+        
     }
 }

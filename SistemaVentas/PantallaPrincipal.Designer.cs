@@ -149,6 +149,13 @@ namespace SistemaVentas
                 BackgroundColor = Color.White
             };
             dgvCarrito.Columns.Add("Producto", "Producto");
+            DataGridViewTextBoxColumn colDescripcion = new DataGridViewTextBoxColumn
+            {
+                Name = "Descripcion",
+                HeaderText = "Descripción",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+            };
+            dgvCarrito.Columns.Add(colDescripcion);
             dgvCarrito.Columns.Add("PrecioUnitario", "Precio Unitario");
             dgvCarrito.Columns.Add("Cantidad", "Cantidad");
             dgvCarrito.Columns.Add("ValorTotal", "Valor Total");
