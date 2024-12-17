@@ -308,7 +308,7 @@ namespace SistemaVentas
             {
                 // Primera impresión: Factura completa para el cliente
                 printDocument = new PrintDocument();
-                printDocument.PrintPage += (s, ev) => PrintDocument_PrintPage(ev, true); // true indica que es para el cliente
+                printDocument.PrintPage += (s, ev) => PrintDocument_PrintPageFactura(ev); // Llama al método exclusivo para la factura
                 PrintDialog printDialog = new PrintDialog { Document = printDocument };
 
                 if (printDialog.ShowDialog() == DialogResult.OK)
@@ -317,7 +317,7 @@ namespace SistemaVentas
 
                     // Segunda impresión: Resumen para la cocina
                     printDocument = new PrintDocument();
-                    printDocument.PrintPage += (s, ev) => PrintDocument_PrintPage(ev, false); // false indica que es para la cocina
+                    printDocument.PrintPage += (s, ev) => PrintDocument_PrintPageCocina(ev); // Llama al método exclusivo para el papel de cocina
                     printDocument.Print();
 
                     // Guardar la factura después de imprimir ambas copias
@@ -334,6 +334,7 @@ namespace SistemaVentas
                 MessageBox.Show($"Error al imprimir: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
         private void GuardarFactura()
@@ -364,148 +365,199 @@ namespace SistemaVentas
                 MessageBox.Show($"Error al guardar la factura en la base de datos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-
-        private void PrintDocument_PrintPage(PrintPageEventArgs e, bool esParaCliente)
+        private void PrintDocument_PrintPageFactura(PrintPageEventArgs e)
         {
             Graphics g = e.Graphics;
 
             // Configuración de márgenes y dimensiones
-            int startY = 10; // Margen superior inicial
-            int offset = 20; // Espaciado entre líneas
-            int paperWidth = 270; // Ancho del papel (aproximadamente 3 pulgadas)
-            int contentWidth = paperWidth - 20; // Ancho de contenido
-            int xCenter = paperWidth / 2; // Centro horizontal
-
-            // Configuración de columnas
-            int colProductoWidth = 100; // Ancho para la columna Producto
-            int colDescripcionWidth = 120; // Ancho para la columna Descripción
-            int colCantidadWidth = 40; // Ancho para la columna Cantidad
+            int startY = 10;
+            int offset = 15; // Reducimos la altura entre líneas
+            int paperWidth = 270;
+            int contentWidth = paperWidth - 20;
+            int colProductoWidth = 100; // Ancho máximo para Producto
 
             // Fuentes
-            Font regularFont = new Font("Courier New", 8);
-            Font boldFont = new Font("Courier New", 8, FontStyle.Bold);
+            Font headerFont = new Font("Arial", 8, FontStyle.Bold);
+            Font regularFont = new Font("Courier New", 7);
+            Font boldFont = new Font("Courier New", 7, FontStyle.Bold);
 
-            // **Factura para el cliente**
-            if (esParaCliente)
+            // LOGO
+            if (logotipo != null)
             {
-                // Encabezado del local
-                g.DrawString("RUC: 1750071472001", regularFont, Brushes.Black, new Point(10, startY));
-                startY += offset;
-                g.DrawString("Dirección: Juan Montalvo e Imbabura N6-59, Cayambe", regularFont, Brushes.Black, new Point(10, startY));
-                startY += offset;
-                g.DrawString("Teléfono: 0987933932", regularFont, Brushes.Black, new Point(10, startY));
-                startY += offset;
+                g.DrawImage(logotipo, 60, startY, 150, 60);
+                startY += 70;
+            }
 
-                g.DrawString($"Fecha: {txtFecha.Text}", regularFont, Brushes.Black, new Point(10, startY));
-                startY += offset;
-                g.DrawString($"Factura: {txtNumeroFactura.Text}  Orden: {txtNumeroOrden.Text}", boldFont, Brushes.Black, new Point(10, startY));
-                startY += offset;
+            // ENCABEZADO
+            g.DrawString("RUC: 1750071472001", regularFont, Brushes.Black, 10, startY);
+            startY += offset;
+            g.DrawString("Dirección: Juan Montalvo e Imbabura", regularFont, Brushes.Black, 10, startY);
+            startY += offset;
+            g.DrawString("N6-59, Cayambe", regularFont, Brushes.Black, 10, startY);
+            startY += offset;
+            g.DrawString("Teléfono: 0987933932", regularFont, Brushes.Black, 10, startY);
+            startY += offset;
 
-                g.DrawString($"Cliente: {txtNombreCliente.Text}", regularFont, Brushes.Black, new Point(10, startY));
-                startY += offset;
+            g.DrawString($"Fecha: {txtFecha.Text}", regularFont, Brushes.Black, 10, startY);
+            startY += offset;
+            g.DrawString($"Factura: {txtNumeroFactura.Text}  Orden: {txtNumeroOrden.Text}", boldFont, Brushes.Black, 10, startY);
+            startY += offset;
+            g.DrawString($"Cédula: {txtCedulaCliente.Text}", regularFont, Brushes.Black, 10, startY);
+            startY += offset;
+            g.DrawString($"Cliente: {txtNombreCliente.Text}", boldFont, Brushes.Black, 10, startY);
+            startY += offset;
 
-                // Línea separadora
-                g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
-                startY += offset;
+            // TABLA ENCABEZADOS
+            g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+            startY += offset;
+            g.DrawString("Producto", boldFont, Brushes.Black, 10, startY);
+            g.DrawString("Cant.", boldFont, Brushes.Black, 120, startY);
+            g.DrawString("P.Uni", boldFont, Brushes.Black, 170, startY);
+            g.DrawString("Total", boldFont, Brushes.Black, 220, startY);
+            startY += offset;
 
-                // Cabecera de la tabla
-                g.DrawString("Producto", boldFont, Brushes.Black, new Point(10, startY));
-                g.DrawString("Cant.", boldFont, Brushes.Black, new Point(140, startY));
-                g.DrawString("P.Uni", boldFont, Brushes.Black, new Point(180, startY));
-                g.DrawString("Total", boldFont, Brushes.Black, new Point(220, startY));
-                startY += offset;
-
-                // Contenido de la tabla
-                foreach (DataGridViewRow row in dgvCarrito.Rows)
+            // TABLA DETALLE
+            foreach (DataGridViewRow row in dgvCarrito.Rows)
+            {
+                if (row.Cells["Producto"].Value != null)
                 {
                     string producto = row.Cells["Producto"].Value.ToString();
                     string cantidad = row.Cells["Cantidad"].Value.ToString();
                     string precioUnitario = row.Cells["PrecioUnitario"].Value.ToString();
                     string total = row.Cells["ValorTotal"].Value.ToString();
 
-                    // Ajuste de salto de línea para Producto
-                    List<string> lineasProducto = AjustarTexto(producto, 20);
-                    foreach (string linea in lineasProducto)
+                    // Aplicar WrapText al producto
+                    string[] productoLineas = WrapText(producto, colProductoWidth, g, regularFont);
+                    int lineHeight = offset;
+                    int tempY = startY;
+
+                    // Imprimir Producto (con salto de línea)
+                    foreach (string linea in productoLineas)
                     {
-                        g.DrawString(linea, regularFont, Brushes.Black, new Point(10, startY));
-                        startY += offset;
+                        g.DrawString(linea, regularFont, Brushes.Black, 10, tempY);
+                        tempY += lineHeight;
                     }
 
-                    g.DrawString(cantidad, regularFont, Brushes.Black, new Point(140, startY - offset));
-                    g.DrawString(precioUnitario, regularFont, Brushes.Black, new Point(180, startY - offset));
-                    g.DrawString(total, regularFont, Brushes.Black, new Point(220, startY - offset));
+                    // Imprimir Cantidad, P.Uni y Total alineados
+                    g.DrawString(cantidad, regularFont, Brushes.Black, 120, startY);
+                    g.DrawString(precioUnitario, regularFont, Brushes.Black, 170, startY);
+                    g.DrawString(total, regularFont, Brushes.Black, 220, startY);
+
+                    // Ajustar posición vertical según la altura máxima de las líneas
+                    startY += productoLineas.Length * lineHeight;
                 }
-
-                // Total
-                startY += offset;
-                g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
-                startY += offset;
-                g.DrawString($"TOTAL: {txtTotal.Text}", boldFont, Brushes.Black, new Point(10, startY));
             }
-            else // **Papel de la cocina**
+
+            // LÍNEA FINAL Y TOTAL
+            startY += offset;
+            g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+            startY += offset;
+            g.DrawString($"TOTAL: {txtTotal.Text}", boldFont, Brushes.Black, 10, startY);
+        }
+
+
+        private void PrintDocument_PrintPageCocina(PrintPageEventArgs e)
+        {
+            Graphics g = e.Graphics;
+
+            // Configuración de márgenes y dimensiones
+            int startY = 50; // Margen superior
+            int offset = 15; // Altura entre líneas
+            int paperWidth = 270;
+            int contentWidth = paperWidth - 20;
+            int colProductoWidth = 100;
+            int colDescripcionWidth = 120;
+            //int colCantidadWidth = 50;
+
+            // Fuentes
+            Font boldFont = new Font("Courier New", 7, FontStyle.Bold);
+            Font regularFont = new Font("Courier New", 7);
+
+            // Encabezados de la tabla
+            g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+            startY += offset;
+            g.DrawString("Producto", boldFont, Brushes.Black, 10, startY);
+            g.DrawString("Descripción", boldFont, Brushes.Black, 10 + colProductoWidth, startY);
+            g.DrawString("Cant.", boldFont, Brushes.Black, 10 + colProductoWidth + colDescripcionWidth, startY);
+            startY += offset;
+
+            // Detalle de productos
+            foreach (DataGridViewRow row in dgvCarrito.Rows)
             {
-                startY += 40; // Espacio adicional arriba
-
-                g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
-                startY += offset;
-
-                // Cabecera para el papel de cocina
-                g.DrawString("Producto", boldFont, Brushes.Black, new Point(10, startY));
-                g.DrawString("Descripción", boldFont, Brushes.Black, new Point(110, startY));
-                g.DrawString("Cant", boldFont, Brushes.Black, new Point(240, startY));
-                startY += offset;
-
-                // Contenido de la tabla
-                foreach (DataGridViewRow row in dgvCarrito.Rows)
+                if (row.Cells["Producto"].Value != null)
                 {
                     string producto = row.Cells["Producto"].Value.ToString();
                     string descripcion = row.Cells["Descripcion"].Value?.ToString() ?? "";
                     string cantidad = row.Cells["Cantidad"].Value.ToString();
 
+                    int lineHeight = offset;
+
+                    // Wrap text para Producto y Descripción
+                    string[] productoLineas = WrapText(producto, colProductoWidth, g, regularFont);
+                    string[] descripcionLineas = WrapText(descripcion, colDescripcionWidth, g, regularFont);
+
+                    int maxLines = Math.Max(productoLineas.Length, descripcionLineas.Length);
+                    int tempY = startY;
+
                     // Imprimir Producto
-                    List<string> lineasProducto = AjustarTexto(producto, 20);
-                    foreach (string linea in lineasProducto)
+                    foreach (string linea in productoLineas)
                     {
-                        g.DrawString(linea, regularFont, Brushes.Black, new Point(10, startY));
-                        startY += offset;
+                        g.DrawString(linea, regularFont, Brushes.Black, 10, tempY);
+                        tempY += lineHeight;
                     }
 
                     // Imprimir Descripción
-                    g.DrawString(descripcion, regularFont, Brushes.Black, new Point(110, startY - (lineasProducto.Count * offset)));
+                    tempY = startY;
+                    foreach (string linea in descripcionLineas)
+                    {
+                        g.DrawString(linea, regularFont, Brushes.Black, 10 + colProductoWidth, tempY);
+                        tempY += lineHeight;
+                    }
 
-                    // Imprimir Cantidad
-                    g.DrawString(cantidad, regularFont, Brushes.Black, new Point(240, startY - (lineasProducto.Count * offset)));
+                    // Imprimir Cantidad (alineado a la derecha)
+                    g.DrawString(cantidad, regularFont, Brushes.Black, 10 + colProductoWidth + colDescripcionWidth, startY);
+
+                    // Ajustar la posición vertical para la siguiente fila
+                    startY += maxLines * lineHeight;
+
+                    // Dibujar una línea delgada después de cada producto
+                    g.DrawLine(Pens.Gray, 10, startY - 3, contentWidth, startY - 3);
                 }
             }
+
+            // Línea final
+            g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
         }
 
-        private List<string> AjustarTexto(string texto, int maxLength)
-        {
-            List<string> lineas = new List<string>();
-            string[] palabras = texto.Split(' ');
-            string lineaActual = "";
 
-            foreach (string palabra in palabras)
+
+        private string[] WrapText(string text, int maxWidth, Graphics graphics, Font font)
+        {
+            var words = text.Split(' ');
+            var lines = new List<string>();
+            var currentLine = "";
+
+            foreach (var word in words)
             {
-                if ((lineaActual + palabra).Length > maxLength)
+                var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+                var testWidth = graphics.MeasureString(testLine, font).Width;
+
+                if (testWidth > maxWidth)
                 {
-                    lineas.Add(lineaActual);
-                    lineaActual = palabra + " ";
+                    lines.Add(currentLine);
+                    currentLine = word;
                 }
                 else
                 {
-                    lineaActual += palabra + " ";
+                    currentLine = testLine;
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(lineaActual))
-                lineas.Add(lineaActual);
+            if (!string.IsNullOrEmpty(currentLine))
+                lines.Add(currentLine);
 
-            return lineas;
+            return lines.ToArray();
         }
 
-
-        
     }
 }
