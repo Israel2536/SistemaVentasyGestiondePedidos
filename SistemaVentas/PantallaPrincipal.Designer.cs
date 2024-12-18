@@ -119,10 +119,38 @@ namespace SistemaVentas
                 Font = new Font("Arial", 10)
             };
             tabPantallaPrincipal.Controls.Add(txtVuelto);
-
-
-
             txtDineroDado.TextChanged += TxtDineroDado_TextChanged;
+            // Botón Atrás
+            Button btnFacturaAtras = new Button
+            {
+                Text = "Atrás",
+                Location = new Point(50, 700), // Ajusta la posición (X, Y)
+                Size = new Size(80, 30)
+            };
+            btnFacturaAtras.Click += BtnFacturaAtras_Click;
+            tabPantallaPrincipal.Controls.Add(btnFacturaAtras); // Agregado al TabPage
+
+            // Botón Adelante
+            Button btnFacturaAdelante = new Button
+            {
+                Text = "Adelante",
+                Location = new Point(150, 700), // Ajusta la posición (X, Y)
+                Size = new Size(80, 30)
+            };
+            btnFacturaAdelante.Click += BtnFacturaAdelante_Click;
+            tabPantallaPrincipal.Controls.Add(btnFacturaAdelante); // Agregado al TabPage
+
+            // Botón Actual
+            Button btnFacturaActual = new Button
+            {
+                Text = "Actual",
+                Location = new Point(250, 700), // Ajusta la posición (X, Y)
+                Size = new Size(80, 30)
+            };
+            btnFacturaActual.Click += BtnFacturaActual_Click;
+            tabPantallaPrincipal.Controls.Add(btnFacturaActual); // Agregado al TabPage
+
+
         }
 
         private void InicializarControlesPantallaPrincipal()
@@ -130,8 +158,9 @@ namespace SistemaVentas
             // Panel Categorías
             panelCategorias = new FlowLayoutPanel
             {
-                Dock = DockStyle.Left,
-                Width = 200,
+                //Dock = DockStyle.Left,
+                Location = new Point(0, 0),   // Mantener la posición inicial
+                Size = new Size(200, 400),
                 BackColor = Color.White,
                 FlowDirection = FlowDirection.TopDown,
                 AutoScroll = true
