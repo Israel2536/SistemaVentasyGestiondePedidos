@@ -41,7 +41,31 @@ namespace SistemaVentas
             ConfigurarConsumidorFinal();
         }
 
+        private void BtnGenerarCierreCaja_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Validación de fechas seleccionadas
+                DateTime fechaInicio = dtpInicio.Value;
+                DateTime fechaFin = dtpFin.Value;
 
+                if (fechaInicio > fechaFin)
+                {
+                    MessageBox.Show("La fecha de inicio no puede ser mayor que la fecha fin.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Abrir la pantalla de cierre de caja
+                using (var cierreDeCajaForm = new CierreDeCaja())
+                {
+                    cierreDeCajaForm.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al generar el cierre de caja: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private void CargarLogotipo()
         {
@@ -176,7 +200,6 @@ namespace SistemaVentas
 
             return siguienteNumero.ToString("D4"); // Número con 4 dígitos
         }
-
         private void CargarCategorias()
         {
             try
@@ -371,7 +394,12 @@ namespace SistemaVentas
         private void PantallaPrincipal_Load(object sender, EventArgs e)
         {
             listaFacturas.Clear();
-            string query = "SELECT NumeroFactura FROM Facturas ORDER BY Fecha ASC";
+            string query = @"
+    SELECT NumeroFactura 
+    FROM Facturas 
+    WHERE DATE(Fecha) = DATE('now') -- Restricción de fecha del día actual
+    ORDER BY Fecha ASC";
+
 
             using (var conexion = new SQLiteConnection("Data Source=miBaseDeDatos.db;Version=3;"))
             {
@@ -563,11 +591,12 @@ namespace SistemaVentas
                 {
                     connection.Open();
 
-                    // Consulta SQL para obtener la factura anterior
+                    // Consulta SQL para obtener la factura anterior del día actual
                     string query = @"
                 SELECT NumeroFactura, Fecha, ClienteID, Total, MetodoPago 
                 FROM Facturas 
                 WHERE NumeroFactura < @numeroFacturaActual 
+                AND DATE(Fecha) = DATE('now') -- Solo del día actual
                 ORDER BY NumeroFactura DESC 
                 LIMIT 1";
 
@@ -581,7 +610,7 @@ namespace SistemaVentas
                             {
                                 // Actualiza los campos principales
                                 txtNumeroFactura.Text = reader["NumeroFactura"].ToString();
-                                txtNumeroOrden.Text = reader["NumeroFactura"].ToString(); // Asumiendo que son iguales
+                                txtNumeroOrden.Text = reader["NumeroFactura"].ToString(); // Sincroniza Número Orden
                                 txtFecha.Text = reader["Fecha"].ToString();
                                 txtCedulaCliente.Text = reader["ClienteID"].ToString();
                                 txtTotal.Text = Convert.ToDecimal(reader["Total"]).ToString("C2");
@@ -592,7 +621,7 @@ namespace SistemaVentas
                             }
                             else
                             {
-                                MessageBox.Show("No hay facturas anteriores.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                MessageBox.Show("No hay facturas anteriores para el día actual.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
                         }
                     }
@@ -603,6 +632,7 @@ namespace SistemaVentas
                 MessageBox.Show($"Error al cargar la factura anterior: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
         private void CargarDetalleFactura(string numeroFactura)
@@ -664,11 +694,12 @@ namespace SistemaVentas
                 {
                     connection.Open();
 
-                    // Consulta SQL para obtener la siguiente factura
+                    // Consulta SQL para obtener la siguiente factura del día actual
                     string query = @"
                 SELECT NumeroFactura, Fecha, ClienteID, Total, MetodoPago 
                 FROM Facturas 
                 WHERE NumeroFactura > @numeroFacturaActual 
+                AND DATE(Fecha) = DATE('now') -- Solo del día actual
                 ORDER BY NumeroFactura ASC 
                 LIMIT 1";
 
@@ -693,7 +724,7 @@ namespace SistemaVentas
                             }
                             else
                             {
-                                MessageBox.Show("No hay facturas siguientes.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                MessageBox.Show("No hay facturas siguientes para el día actual.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
                         }
                     }
@@ -705,7 +736,6 @@ namespace SistemaVentas
             }
         }
 
-
         private void BtnFacturaActual_Click(object sender, EventArgs e)
         {
             try
@@ -713,10 +743,11 @@ namespace SistemaVentas
                 // Limpia los campos de la pantalla
                 BtnLimpiar_Click(null, null);
 
-                // Genera el siguiente número de factura disponible
+                // Genera el siguiente número de factura disponible para el día actual
                 string siguienteNumeroFactura = GenerarNumeroOrden();
                 txtNumeroFactura.Text = siguienteNumeroFactura;
                 txtNumeroOrden.Text = siguienteNumeroFactura;
+                txtFecha.Text = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"); // Actualiza la fecha a la actual
 
                 MessageBox.Show("Listo para registrar una nueva factura.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -725,7 +756,6 @@ namespace SistemaVentas
                 MessageBox.Show($"Error al preparar una nueva factura: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
 
 
         private void PrintDocument_PrintPageFactura(PrintPageEventArgs e)

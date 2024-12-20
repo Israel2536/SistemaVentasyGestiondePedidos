@@ -28,6 +28,11 @@ namespace SistemaVentas
         private TabPage tabAgregarItems; // Pestaña Agregar Ítems
         private TextBox txtDineroDado;
         private TextBox txtVuelto;
+        private TabPage tabCierreDeCaja; // Nueva pestaña para el cierre de caja
+        private Button btnGenerarCierreCaja; // Botón para generar el cierre de caja
+        private DateTimePicker dtpInicio; // Selector de fecha de inicio
+        private DateTimePicker dtpFin; // Selector de fecha de fin
+        private Label lblFechaInicio, lblFechaFin;
 
         protected override void Dispose(bool disposing)
         {
@@ -124,7 +129,7 @@ namespace SistemaVentas
             Button btnFacturaAtras = new Button
             {
                 Text = "Atrás",
-                Location = new Point(50, 700), // Ajusta la posición (X, Y)
+                Location = new Point(50, 550), // Ajusta la posición (X, Y) al nivel correcto
                 Size = new Size(80, 30)
             };
             btnFacturaAtras.Click += BtnFacturaAtras_Click;
@@ -134,7 +139,7 @@ namespace SistemaVentas
             Button btnFacturaAdelante = new Button
             {
                 Text = "Adelante",
-                Location = new Point(150, 700), // Ajusta la posición (X, Y)
+                Location = new Point(150, 550), // Ajusta la posición (X, Y) al nivel correcto
                 Size = new Size(80, 30)
             };
             btnFacturaAdelante.Click += BtnFacturaAdelante_Click;
@@ -144,11 +149,58 @@ namespace SistemaVentas
             Button btnFacturaActual = new Button
             {
                 Text = "Actual",
-                Location = new Point(250, 700), // Ajusta la posición (X, Y)
+                Location = new Point(250, 550), // Ajusta la posición (X, Y) al nivel correcto
                 Size = new Size(80, 30)
             };
             btnFacturaActual.Click += BtnFacturaActual_Click;
             tabPantallaPrincipal.Controls.Add(btnFacturaActual); // Agregado al TabPage
+
+            // Nueva pestaña Cierre de Caja
+            tabCierreDeCaja = new TabPage("Cierre de Caja");
+
+            // Controles para el rango de fechas
+            lblFechaInicio = new Label
+            {
+                Text = "Fecha Inicio:",
+                Location = new Point(20, 20),
+                AutoSize = true
+            };
+            tabCierreDeCaja.Controls.Add(lblFechaInicio);
+
+            dtpInicio = new DateTimePicker
+            {
+                Location = new Point(120, 15),
+                Format = DateTimePickerFormat.Short
+            };
+            tabCierreDeCaja.Controls.Add(dtpInicio);
+
+            lblFechaFin = new Label
+            {
+                Text = "Fecha Fin:",
+                Location = new Point(20, 60),
+                AutoSize = true
+            };
+            tabCierreDeCaja.Controls.Add(lblFechaFin);
+
+            dtpFin = new DateTimePicker
+            {
+                Location = new Point(120, 55),
+                Format = DateTimePickerFormat.Short
+            };
+            tabCierreDeCaja.Controls.Add(dtpFin);
+
+            // Botón para generar el cierre de caja
+            btnGenerarCierreCaja = new Button
+            {
+                Text = "Generar Cierre",
+                Location = new Point(120, 100),
+                Size = new Size(150, 30)
+            };
+            btnGenerarCierreCaja.Click += BtnGenerarCierreCaja_Click; // Evento para el botón
+            tabCierreDeCaja.Controls.Add(btnGenerarCierreCaja);
+
+            // Agregar la pestaña al TabControl
+            tabControlPantallaPrincipal.TabPages.Add(tabCierreDeCaja);
 
 
         }
