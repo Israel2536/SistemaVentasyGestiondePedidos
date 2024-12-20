@@ -860,7 +860,6 @@ namespace SistemaVentas
             int contentWidth = paperWidth - 20;
             int colProductoWidth = 100;
             int colDescripcionWidth = 120;
-            //int colCantidadWidth = 50;
 
             // Fuentes
             Font boldFont = new Font("Courier New", 7, FontStyle.Bold);
@@ -868,6 +867,7 @@ namespace SistemaVentas
 
             // Encabezados de la tabla
             g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+            g.DrawString($"# Orden: {txtNumeroOrden.Text}", boldFont, Brushes.Black, contentWidth - 80, startY - 15); // Agregamos el número de orden
             startY += offset;
             g.DrawString("Producto", boldFont, Brushes.Black, 10, startY);
             g.DrawString("Descripción", boldFont, Brushes.Black, 10 + colProductoWidth, startY);
@@ -918,8 +918,13 @@ namespace SistemaVentas
                 }
             }
 
-            // Línea final
+            // Dibujar borde inferior
+            startY += offset;
             g.DrawLine(Pens.Black, 10, startY, contentWidth, startY);
+
+            // Última línea con información adicional
+            startY += offset;
+            g.DrawString("Ánimo, nuevo pedido!!!!!!", boldFont, Brushes.Black, 10, startY);
         }
 
 
