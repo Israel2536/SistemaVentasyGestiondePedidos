@@ -99,6 +99,12 @@
     <Compile Include="AgregarItems.Designer.cs">
       <DependentUpon>AgregarItems.cs</DependentUpon>
     </Compile>
+    <Compile Include="CierreDeCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CierreDeCaja.Designer.cs">
+      <DependentUpon>CierreDeCaja.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
